@@ -20,19 +20,26 @@ node {
   
     stage('deploy') {
       def resourceGroup = 'jenkins-get-started-rg'
-      def webAppName = 'jenkins-webapp-yiding2025'
+      def webAppName = 'jenkins-linux-webapp-yiding2025'
       // login Azure
       withCredentials([usernamePassword(credentialsId: 'AzureServicePrincipal', passwordVariable: 'AZURE_CLIENT_SECRET', usernameVariable: 'AZURE_CLIENT_ID')]) {
        sh '''
           az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID
           az account set -s $AZURE_SUBSCRIPTION_ID
+          cp target/calculator-1.0.war target/ROOT.war  # ✅ 加这行
+
+          az webapp deploy \
+            --resource-group ${resourceGroup} \
+            --name ${webAppName} \
+            --src-path target/ROOT.war \
+            --type war
         '''
       }
       // get publish settings
-      def pubProfilesJson = sh script: "az webapp deployment list-publishing-profiles -g $resourceGroup -n $webAppName", returnStdout: true
-      def ftpProfile = getFtpPublishProfile pubProfilesJson
+      //def pubProfilesJson = sh script: "az webapp deployment list-publishing-profiles -g $resourceGroup -n $webAppName", returnStdout: true
+      //def ftpProfile = getFtpPublishProfile pubProfilesJson
       // upload package
-      sh "az webapp deploy --resource-group jenkins-get-started-rg --name jenkins-webapp-yiding2025 --src-path target/calculator-1.0.war --type war --target-path webapps/ROOT.war"
+      //sh "az webapp deploy --resource-group jenkins-get-started-rg --name jenkins-webapp-yiding2025 --src-path target/calculator-1.0.war --type war --target-path webapps/ROOT.war"
       // log out
       sh 'az logout'
     }
